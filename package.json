@@ -16,5 +16,8 @@
   "bugs": {
     "url": "https://github.com/copelandbrandon/tinyApp/issues"
   },
-  "homepage": "https://github.com/copelandbrandon/tinyApp#readme"
+  "homepage": "https://github.com/copelandbrandon/tinyApp#readme",
+  "dependencies": {
+    "express": "^4.17.1"
+  }
 }
