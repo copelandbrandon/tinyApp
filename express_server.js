@@ -10,6 +10,10 @@ const urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
   "9sm5xK": "http://www.google.com"
 };
+//returns random 7 digit string made up of numbers or letters via base 36 conversion
+const generateRandomString = function() {
+  return Math.random().toString(36).substring(7);
+};
 
 app.get("/", (req, res) => {
   res.send("Hello!");
@@ -30,6 +34,11 @@ app.get("/urls", (req, res)=>{
 
 app.get("/urls/new", (req, res)=>{
   res.render("urls_new");
+});
+
+app.post("/urls", (req, res)=>{
+  console.log(req.body);
+  res.send("Ok");
 });
  
 app.get("/urls/:shortURL", (req, res)=>{
