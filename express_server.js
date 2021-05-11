@@ -35,12 +35,18 @@ app.get("/urls", (req, res)=>{
 app.get("/urls/new", (req, res)=>{
   res.render("urls_new");
 });
-
+//create new short url
 app.post("/urls", (req, res)=>{
   let shortURL = generateRandomString();
   let longURL = req.body.longURL;
   urlDatabase[shortURL] = longURL;
   res.redirect(`/urls/${shortURL}`);
+});
+//delete existing url
+app.post("/urls/:shortURL/delete", (req, res)=>{
+  let shortURL = req.params.shortURL;
+  delete urlDatabase[shortURL];
+  res.redirect("/urls");
 });
 
 app.get("/u/:shortURL", (req, res)=>{
