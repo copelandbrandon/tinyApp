@@ -52,6 +52,11 @@ app.post("/urls/:shortURL/delete", (req, res)=>{
   delete urlDatabase[shortURL];
   res.redirect("/urls");
 });
+//logout route
+app.post("/logout", (req,res)=>{
+  res.clearCookie("username");
+  res.redirect("/urls");
+});
 //updates existing
 app.post("/urls/:shortURL", (req, res)=>{
   let shortURL = req.params.shortURL;
@@ -64,11 +69,6 @@ app.post("/login", (req,res)=>{
   let cookie = req.body.username;
   res.cookie("username", cookie);
   res.redirect("/urls")
-});
-
-app.post("/logout", (req,res)=>{
-  res.clearCookie("username");
-  res.redirect("/urls");
 });
 
 app.get("/u/:shortURL", (req, res)=>{

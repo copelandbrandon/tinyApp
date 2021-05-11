@@ -12,15 +12,17 @@
         </div>
       </div>
     </div>
-    <% if (username != undefined) { %>
-      <form method="POST" action="logout">
-      <label for="loginForm">Signed in as: <%= username %></label>
-      <button type="submit">Logout</button>
-      <% } else if (username === undefined) { %>
-        <form method="POST" action="/login">
-        <input id="loginForm" type="text" name="username"/>
-        <button type="submit">Login</button>
-    <% } %>
+    <span style="color:black">
+      <% if (username != undefined) { %>
+        <form method="POST" action="logout">
+        <label for="loginForm">Signed in as: <%= username %></label>
+        <button type="submit" class="btn btn-success">Logout</button>
+        <% } else if (username === undefined) { %>
+          <form method="POST" action="/login">
+          <input id="loginForm" type="text" name="username"/>
+          <button type="submit" class="btn btn-success">Login</button>
+      <% } %>
+    </span>
     </form>
   </nav>
 </header>
