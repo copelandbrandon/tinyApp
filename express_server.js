@@ -31,15 +31,15 @@ const generateRandomString = function() {
   return Math.random().toString(36).substring(7);
 };
 
-//returns true if email is found otherwise returns false
-const findEmail = function(userEmail) {
+//returns an object containing the users info if found and returns undefined if not found
+const findByEmail = function(userEmail) {
   for (let user in users) {
     console.log("user ID: ",users[user].email);
     if (users[user].email === userEmail) {
-      return true;
+      return { id: users[user].id, email: users[user].email, password: users[user].password};
     }
   }
-  return false;
+  return undefined;
 };
 
 //home page route
@@ -64,7 +64,8 @@ app.get("/register", (req, res)=>{
 // registration submit handler
 app.post("/register", (req, res)=>{
   const randomID = generateRandomString();
-  if (req.body.email === "" || req.body.password === "" || findEmail(req.body.email) === true) {
+  const userInfo = findByEmail(req.body.email);
+  if (req.body.email === "" || req.body.password === "" || userInfo !== undefined) {
     res.sendStatus(400);
   }
   users[randomID] = { id: randomID, email: req.body.email, password: req.body.password}
@@ -117,7 +118,21 @@ app.post("/urls/:shortURL", (req, res)=>{
 //login route
 app.get("/login", (req,res)=>{
   const templateVars = {user: users[req.cookies["user_id"]]};
-  res.render("/urls_login", templateVars);
+  res.render("urls_login", templateVars);
+});
+
+//login handler
+app.post("/login", (req, res)=>{
+  const userEmail = req.body.email;
+  const password = req.body.password;
+  const userInfo = findByEmail(req.body.email);
+  if (req.body.email === "" || userInfo === undefined) {
+    res.sendStatus(403);
+  } else if (userInfo.email === userEmail && userInfo.password !== password) {
+    res.sendStatus(403);
+  }
+  res.cookie("user_id", userInfo.id);
+  res.redirect("/urls");
 });
 
 // redirect for shortURL's
@@ -125,12 +140,6 @@ app.get("/u/:shortURL", (req, res)=>{
   const longURL = urlDatabase[req.params.shortURL];
   res.redirect(longURL);
 });
-
- //individual url page endpoint
-// app.get("/urls/:shortURL", (req, res)=>{
-//   const templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL], username: req.cookies["username"]};
-//   res.render("urls_show", templateVars);
-// });
 
 
 app.listen(PORT, () => {
