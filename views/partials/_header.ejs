@@ -13,11 +13,11 @@
       </div>
     </div>
     <span style="color:black">
-      <% if (username != undefined) { %>
+      <% if (user != undefined) { %>
         <form method="POST" action="logout">
-        <label for="loginForm">Signed in as: <%= username %></label>
+        <label for="loginForm">Signed in as: <%= user.email %></label>
         <button type="submit" class="btn btn-success">Logout</button>
-        <% } else if (username === undefined) { %>
+        <% } else if (user === undefined) { %>
           <form method="POST" action="/login">
           <input id="loginForm" type="text" name="username"/>
           <button type="submit" class="btn btn-success">Login</button>
