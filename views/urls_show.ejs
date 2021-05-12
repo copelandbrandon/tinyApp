@@ -13,15 +13,20 @@
   <div class="card text-center">
       <div class="card-header"></div>
       <div class="card-body">
-        <h5 class="card-title">TinyURL for: <%= longURL %></h5>
-        <p class="card-text">Short URL: <a href="/u/<%= shortURL %>"><%= shortURL %></a></p>
-        <p class="card-text"> Long URL: <a href="/u/<%= longURL %>"><%= longURL %></a></p>
-        <form method="POST" action="/urls/<%= shortURL %>">
-          <label for="newLong">Update URL:</label>
-          <input id="newLong" type="text" name="longURL"/>
-          <button type = "submit">Update</button>
-        </form>
-        <a href="/urls/new">Shorten a new URL</a>
+        <% if (Object.keys(urls).length >= 1) {%>
+
+          <h5 class="card-title">TinyURL for: <%= longURL %></h5>
+          <p class="card-text">Short URL: <a href="/u/<%= shortURL %>"><%= shortURL %></a></p>
+          <p class="card-text"> Long URL: <a href="/u/<%= longURL %>"><%= longURL %></a></p>
+          <form method="POST" action="/urls/<%= shortURL %>">
+            <label for="newLong">Update URL:</label>
+            <input id="newLong" type="text" name="longURL"/>
+            <button type = "submit">Update</button>
+          </form>
+          <a href="/urls/new">Shorten a new URL</a>
+          <% } else if (Object.keys(urls).length < 1) {%>
+          <h5>Please log in or register to view your URL's</h5>
+          <% } %>
       </div>
     <div class="card-footer text-muted"></div>
   </div>
