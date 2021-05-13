@@ -24,8 +24,10 @@
             <button type = "submit">Update</button>
           </form>
           <a href="/urls/new">Shorten a new URL</a>
-          <% } else if (Object.keys(urls).length < 1) {%>
+          <% } else if (Object.keys(urls).length < 1 && user === undefined) {%>
           <h5>Please log in or register to view your URL's</h5>
+          <% } else if (user.id && Object.keys(urls).length < 1) {%>
+          <h5>This user is not authorized to access this URL</h5>
           <% } %>
       </div>
     <div class="card-footer text-muted"></div>

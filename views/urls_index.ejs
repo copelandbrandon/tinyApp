@@ -24,15 +24,19 @@
         </tr>
       </thead>
       <tbody>
-        <% if(Object.keys(urls).length < 1) {%>
+        <% if(Object.keys(urls).length < 1 && user === undefined) {%>
           <tr>
             <td>Please log in or register to view your shortened URL's</td>
           </tr>
+          <% } else if (user.id && Object.keys(urls).length < 1) {%>
+            <tr>
+              <td>When you add a new short URL it will appear here</td>
+            </tr>
           <% } %>
         <% for(let url in urls) { %>
           <tr>
             <td><%= url %></td>
-            <td><%= urls.longURL %></td>
+            <td><%= urls[url].longURL %></td>
             <td><form method="GET" action="/urls/<%= url %>"><button type="submit" class="btn btn-info">Edit</button></form></td>
             <td><form method = "POST" action="/urls/<%= url %>/delete"><button type="submit" onclick="Delete" class="btn btn-danger">Delete</button></form></td>
           </tr>

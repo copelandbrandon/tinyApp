@@ -26,6 +26,7 @@ const urlDatabase = {
   "b2xVn2": { longURL: "http://www.lighthouselabs.ca", userID: "randomUserID"},
   "9sm5xK": { longURL: "http://www.google.com", userID: "randomUserID"}
 };
+
 //returns random 7 digit string made up of numbers or letters via base 36 conversion
 const generateRandomString = function() {
   return Math.random().toString(36).substring(7);
@@ -34,7 +35,6 @@ const generateRandomString = function() {
 //returns an object containing the users info if found and returns undefined if not found
 const findByEmail = function(userEmail) {
   for (let user in users) {
-    console.log("user ID: ",users[user].email);
     if (users[user].email === userEmail) {
       return { id: users[user].id, email: users[user].email, password: users[user].password};
     }
@@ -47,15 +47,19 @@ const findForUser = function(id) {
   const userUrlDatabase = {}
   for (const urls in urlDatabase) {
     if (urlDatabase[urls].userID === id) {
-      userUrlDatabase[urls] = urls;
+      userUrlDatabase[urls] = {longURL: urlDatabase[urls].longURL , userID: id};
     }
   }
+  console.log("user URL database", userUrlDatabase);
   return userUrlDatabase;
 };
 
 //home page route
 app.get("/", (req, res) => {
-  res.send("Hello!");
+  if (req.cookies["user_id"]) {
+    res.redirect("/urls");
+  }
+  res.redirect("/login");
 });
 
 app.get("/urls.json", (req, res)=>{
@@ -79,7 +83,6 @@ app.post("/register", (req, res)=>{
   users[randomID] = { id: randomID, email: req.body.email, password: req.body.password}
   res.cookie("user_id", randomID);
   res.redirect("/urls")
-  console.log(users);
 });
 
 //urls list endpoint
@@ -102,17 +105,20 @@ app.get("/urls/new", (req, res)=>{
 //create new short url
 app.post("/urls", (req, res)=>{
   let shortURL = generateRandomString();
-  let longURL = req.body.longURL;
-  urlDatabase[shortURL].longURL = longURL;
-  urlDatabase[shortURL].userID = req.cookies["user_id"];
+  let newLongURL = req.body.longURL;
+  urlDatabase[shortURL] = {longURL: newLongURL, userID: req.cookies["user_id"]};
   res.redirect(`/urls/${shortURL}`);
 });
 
 //delete existing url
 app.post("/urls/:shortURL/delete", (req, res)=>{
-  let shortURL = req.params.shortURL;
-  delete urlDatabase[shortURL];
-  res.redirect("/urls");
+  const shortURL = req.params.shortURL;
+  const currentID = req.cookies["user_id"];
+  if (urlDatabase[shortURL].userID === currentID) {
+    delete urlDatabase[shortURL];
+    res.redirect("/urls");
+  }
+  res.send("Unauthorized delete attempt");
 });
 
 //logout route
@@ -125,8 +131,12 @@ app.post("/logout", (req,res)=>{
 app.post("/urls/:shortURL", (req, res)=>{
   const shortURL = req.params.shortURL;
   const newLong = req.body.longURL;
-  urlDatabase[shortURL] = newLong;
-  res.redirect(`/urls/${shortURL}`)
+  const currentID = req.cookies["user_id"];
+  if (urlDatabase[shortURL].userID === currentID) {
+    urlDatabase[shortURL].longURL = newLong;
+    res.redirect(`/urls/${shortURL}`)
+  }
+  res.send("Unauthorized update attempt")
 });
 
 //login route
@@ -157,6 +167,9 @@ app.get("/u/:shortURL", (req, res)=>{
 
 app.get("/urls/:shortURL", (req, res)=>{
   const userUrlDatabase = findForUser(req.cookies["user_id"])
+  if (urlDatabase[req.params.shortURL] === undefined) {
+    res.send("Requested URL does not exist");
+  }
   const templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL].longURL, user: users[req.cookies["user_id"]], urls: userUrlDatabase};
   res.render("urls_show", templateVars);
 });
