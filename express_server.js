@@ -50,7 +50,6 @@ const findForUser = function(id) {
       userUrlDatabase[urls] = {longURL: urlDatabase[urls].longURL , userID: id};
     }
   }
-  console.log("user URL database", userUrlDatabase);
   return userUrlDatabase;
 };
 
@@ -78,7 +77,7 @@ app.post("/register", (req, res)=>{
   const randomID = generateRandomString();
   const userInfo = findByEmail(req.body.email);
   if (req.body.email === "" || req.body.password === "" || userInfo !== undefined) {
-    res.sendStatus(400);
+    return res.sendStatus(400);
   }
   users[randomID] = { id: randomID, email: req.body.email, password: req.body.password};
   res.cookie("user_id", randomID);
@@ -88,7 +87,6 @@ app.post("/register", (req, res)=>{
 //urls list endpoint
 app.get("/urls", (req, res)=>{
   const userURL = findForUser(req.cookies["user_id"]);
-  console.log(userURL);
   const templateVars = {urls: userURL, user: users[req.cookies["user_id"]]};
   res.render("urls_index", templateVars);
 });
@@ -116,7 +114,7 @@ app.post("/urls/:shortURL/delete", (req, res)=>{
   const currentID = req.cookies["user_id"];
   if (urlDatabase[shortURL].userID === currentID) {
     delete urlDatabase[shortURL];
-    res.redirect("/urls");
+    return res.redirect("/urls");
   }
   res.send("Unauthorized delete attempt");
 });
@@ -134,9 +132,9 @@ app.post("/urls/:shortURL", (req, res)=>{
   const currentID = req.cookies["user_id"];
   if (urlDatabase[shortURL].userID === currentID) {
     urlDatabase[shortURL].longURL = newLong;
-    res.redirect(`/urls/${shortURL}`);
+    return res.redirect(`/urls/${shortURL}`);
   }
-  res.send("Unauthorized update attempt");
+  return res.send("Unauthorized update attempt");
 });
 
 //login route
