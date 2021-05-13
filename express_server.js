@@ -3,7 +3,7 @@ const app = express();
 const PORT = 8080; // default port 8080
 const bodyParser = require("body-parser");
 const cookieParser = require("cookie-parser");
-
+const bcrypt = require("bcrypt");
 
 app.use(bodyParser.urlencoded({extended: true}));
 app.set("view engine", "ejs");
@@ -72,14 +72,15 @@ app.get("/register", (req, res)=>{
   res.render("urls_registration", templateVars);
 });
 
-// registration submit handler
+// registration submit endpoint
 app.post("/register", (req, res)=>{
   const randomID = generateRandomString();
   const userInfo = findByEmail(req.body.email);
   if (req.body.email === "" || req.body.password === "" || userInfo !== undefined) {
     return res.sendStatus(400);
   }
-  users[randomID] = { id: randomID, email: req.body.email, password: req.body.password};
+  users[randomID] = { id: randomID, email: req.body.email, password: bcrypt.hashSync(req.body.password, 10)};
+  console.log("user info with hashed password: ", users);
   res.cookie("user_id", randomID);
   res.redirect("/urls");
 });
@@ -143,18 +144,18 @@ app.get("/login", (req,res)=>{
   res.render("urls_login", templateVars);
 });
 
-//login handler
+//login submit endpoint
 app.post("/login", (req, res)=>{
   const userEmail = req.body.email;
   const password = req.body.password;
   const userInfo = findByEmail(req.body.email);
   if (req.body.email === "" || userInfo === undefined) {
-    res.sendStatus(403);
-  } else if (userInfo.email === userEmail && userInfo.password !== password) {
-    res.sendStatus(403);
+   return res.sendStatus(403);
+  } else if (userInfo.email === userEmail && bcrypt.compareSync(password, userInfo.password) !== true) {
+    return res.sendStatus(403);
   }
   res.cookie("user_id", userInfo.id);
-  res.redirect("/urls");
+  return res.redirect("/urls");
 });
 
 // redirect for shortURL's
