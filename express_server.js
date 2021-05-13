@@ -36,18 +36,18 @@ const urlDatabase = {
 
 //home page endpoint
 app.get("/", (req, res) => {
-  if (req.session.user_id) {
+  if (req.session.userId) {
     return res.redirect("/urls");
   }
   return res.redirect("/login");
 });
 
-//registration page endpoint 
+//registration page endpoint
 app.get("/register", (req, res)=>{
-  if (req.session.user_id !== undefined) {
+  if (req.session.userId !== undefined) {
     return res.redirect("/urls");
   }
-  const templateVars = {user: users[req.session.user_id]};
+  const templateVars = {user: users[req.session.userId]};
   return res.render("urls_registration", templateVars);
 });
 
@@ -60,28 +60,28 @@ app.post("/register", (req, res)=>{
       email: req.body.email,
       password: req.body.password,
       userInfo: userInfo,
-      user: users[req.session.user_id]
-    }
-    return res.render("urls_registration_failure", templateVars)
+      user: users[req.session.userId]
+    };
+    return res.render("urls_registration_failure", templateVars);
   }
   users[randomID] = { id: randomID, email: req.body.email, password: bcrypt.hashSync(req.body.password, 10)};
-  req.session.user_id = randomID;
+  req.session.userId = randomID;
   return res.redirect("/urls");
 });
 
 //urls list endpoint
 app.get("/urls", (req, res)=>{
-  const userURL = findForUser(req.session.user_id, urlDatabase);
-  const templateVars = {urls: userURL, user: users[req.session.user_id]};
+  const userURL = findForUser(req.session.userId, urlDatabase);
+  const templateVars = {urls: userURL, user: users[req.session.userId]};
   return res.render("urls_index", templateVars);
 });
 
-//add urls endpoint 
+//add urls endpoint
 app.get("/urls/new", (req, res)=>{
-  if (req.session.user_id === undefined) {
+  if (req.session.userId === undefined) {
     return res.redirect("/login");
   }
-  const templateVars = {user: users[req.session.user_id]};
+  const templateVars = {user: users[req.session.userId]};
   return res.render("urls_new", templateVars);
 });
 
@@ -89,14 +89,14 @@ app.get("/urls/new", (req, res)=>{
 app.post("/urls", (req, res)=>{
   let shortURL = generateRandomString();
   let newLongURL = req.body.longURL;
-  urlDatabase[shortURL] = {longURL: newLongURL, userID: req.session.user_id};
+  urlDatabase[shortURL] = {longURL: newLongURL, userID: req.session.userId};
   return res.redirect(`/urls/${shortURL}`);
 });
 
 //delete existing url endpoint
 app.post("/urls/:shortURL/delete", (req, res)=>{
   const shortURL = req.params.shortURL;
-  const currentID = req.session.user_id;
+  const currentID = req.session.userId;
   if (urlDatabase[shortURL].userID === currentID) {
     delete urlDatabase[shortURL];
     return res.redirect("/urls");
@@ -114,7 +114,7 @@ app.post("/logout", (req,res)=>{
 app.post("/urls/:shortURL", (req, res)=>{
   const shortURL = req.params.shortURL;
   const newLong = req.body.longURL;
-  const currentID = req.session.user_id;
+  const currentID = req.session.userId;
   if (urlDatabase[shortURL].userID === currentID) {
     urlDatabase[shortURL].longURL = newLong;
     return res.redirect("/urls");
@@ -124,10 +124,10 @@ app.post("/urls/:shortURL", (req, res)=>{
 
 //login endpoint
 app.get("/login", (req,res)=>{
-  if (req.session.user_id !== undefined) {
+  if (req.session.userId !== undefined) {
     return res.redirect("/urls");
   }
-  const templateVars = {user: users[req.session.user_id]};
+  const templateVars = {user: users[req.session.userId]};
   return res.render("urls_login", templateVars);
 });
 
@@ -137,18 +137,18 @@ app.post("/login", (req, res)=>{
   const password = req.body.password;
   const userInfo = findByEmail(req.body.email, users);
   if (req.body.email === "" || userInfo === undefined) {
-   return res.sendStatus(403);
+    return res.sendStatus(403);
   } else if (userInfo.email === userEmail && bcrypt.compareSync(password, userInfo.password) !== true) {
     return res.sendStatus(403);
   }
-  req.session.user_id = userInfo.id;
+  req.session.userId = userInfo.id;
   return res.redirect("/urls");
 });
 
 // redirect for shortURL's
 app.get("/u/:shortURL", (req, res)=>{
   if (urlDatabase[req.params.shortURL] === undefined) {
-    return res.send("Not a valid short URL, please try again.")
+    return res.send("Not a valid short URL, please try again.");
   }
   const longURL = urlDatabase[req.params.shortURL].longURL;
   return res.redirect(longURL);
@@ -156,14 +156,14 @@ app.get("/u/:shortURL", (req, res)=>{
 
 //individual link page endpoint
 app.get("/urls/:shortURL", (req, res)=>{
-  const userUrlDatabase = findForUser(req.session.user_id, urlDatabase);
+  const userUrlDatabase = findForUser(req.session.userId, urlDatabase);
   if (urlDatabase[req.params.shortURL] === undefined) {
     return res.send("Requested URL does not exist");
   }
-  const templateVars = { 
+  const templateVars = {
     shortURL: req.params.shortURL,
     longURL: urlDatabase[req.params.shortURL].longURL,
-    user: users[req.session.user_id],
+    user: users[req.session.userId],
     urls: userUrlDatabase
   };
   return res.render("urls_show", templateVars);
