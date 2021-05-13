@@ -56,7 +56,7 @@ const findForUser = function(id) {
 //home page route
 app.get("/", (req, res) => {
   if (req.cookies["user_id"]) {
-    res.redirect("/urls");
+    return res.redirect("/urls");
   }
   res.redirect("/login");
 });
