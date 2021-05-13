@@ -10,7 +10,7 @@ app.set("view engine", "ejs");
 app.use(cookieParser());
 
 const users = {
-  "randomUserID": { 
+  "randomUserID": {
     id: "randomUserID",
     email: "user@example.com",
     password: "examplePassword"
@@ -44,7 +44,7 @@ const findByEmail = function(userEmail) {
 
 //finds urls created by user
 const findForUser = function(id) {
-  const userUrlDatabase = {}
+  const userUrlDatabase = {};
   for (const urls in urlDatabase) {
     if (urlDatabase[urls].userID === id) {
       userUrlDatabase[urls] = {longURL: urlDatabase[urls].longURL , userID: id};
@@ -70,7 +70,7 @@ app.get("/urls.json", (req, res)=>{
 //registration page endpoint
 app.get("/register", (req, res)=>{
   const templateVars = {user: users[req.cookies["user_id"]]};
-  res.render("urls_registration", templateVars)
+  res.render("urls_registration", templateVars);
 });
 
 // registration submit handler
@@ -80,9 +80,9 @@ app.post("/register", (req, res)=>{
   if (req.body.email === "" || req.body.password === "" || userInfo !== undefined) {
     res.sendStatus(400);
   }
-  users[randomID] = { id: randomID, email: req.body.email, password: req.body.password}
+  users[randomID] = { id: randomID, email: req.body.email, password: req.body.password};
   res.cookie("user_id", randomID);
-  res.redirect("/urls")
+  res.redirect("/urls");
 });
 
 //urls list endpoint
@@ -91,12 +91,12 @@ app.get("/urls", (req, res)=>{
   console.log(userURL);
   const templateVars = {urls: userURL, user: users[req.cookies["user_id"]]};
   res.render("urls_index", templateVars);
- });
+});
 
 //add urls endpoint
 app.get("/urls/new", (req, res)=>{
   if (req.cookies["user_id"] === undefined) {
-    res.redirect("/login")
+    res.redirect("/login");
   }
   const templateVars = {user: users[req.cookies["user_id"]]};
   res.render("urls_new", templateVars);
@@ -134,9 +134,9 @@ app.post("/urls/:shortURL", (req, res)=>{
   const currentID = req.cookies["user_id"];
   if (urlDatabase[shortURL].userID === currentID) {
     urlDatabase[shortURL].longURL = newLong;
-    res.redirect(`/urls/${shortURL}`)
+    res.redirect(`/urls/${shortURL}`);
   }
-  res.send("Unauthorized update attempt")
+  res.send("Unauthorized update attempt");
 });
 
 //login route
@@ -166,7 +166,7 @@ app.get("/u/:shortURL", (req, res)=>{
 });
 
 app.get("/urls/:shortURL", (req, res)=>{
-  const userUrlDatabase = findForUser(req.cookies["user_id"])
+  const userUrlDatabase = findForUser(req.cookies["user_id"]);
   if (urlDatabase[req.params.shortURL] === undefined) {
     res.send("Requested URL does not exist");
   }
