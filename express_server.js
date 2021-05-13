@@ -2,20 +2,18 @@ const express = require("express");
 const app = express();
 const PORT = 8080; // default port 8080
 const bodyParser = require("body-parser");
-// const cookieParser = require("cookie-parser");
 const bcrypt = require("bcrypt");
 const cookieSession = require("cookie-session");
 const { findByEmail, findForUser, generateRandomString } = require("./helpers");
 
-app.use(bodyParser.urlencoded({extended: true}));
 app.set("view engine", "ejs");
-// app.use(cookieParser());
+app.use(bodyParser.urlencoded({extended: true}));
 app.use(cookieSession({
   name: "session",
   keys: ["superSecretKey", "secondSuperSecretKey"]
 }));
 
-//hardcoded users will not work due to password hashing
+//hardcoded users will not be able to log in due to password hashing
 const users = {
   "randomUserID": {
     id: "randomUserID",
@@ -64,7 +62,11 @@ app.post("/register", (req, res)=>{
     };
     return res.render("urls_registration_failure", templateVars);
   }
-  users[randomID] = { id: randomID, email: req.body.email, password: bcrypt.hashSync(req.body.password, 10)};
+  users[randomID] = {
+    id: randomID,
+    email: req.body.email,
+    password: bcrypt.hashSync(req.body.password, 10)
+  };
   req.session.userId = randomID;
   return res.redirect("/urls");
 });
