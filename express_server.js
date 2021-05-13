@@ -5,7 +5,7 @@ const bodyParser = require("body-parser");
 // const cookieParser = require("cookie-parser");
 const bcrypt = require("bcrypt");
 const cookieSession = require("cookie-session");
-const { findByEmail } = require("./helpers");
+const { findByEmail, findForUser, generateRandomString } = require("./helpers");
 
 app.use(bodyParser.urlencoded({extended: true}));
 app.set("view engine", "ejs");
@@ -15,6 +15,7 @@ app.use(cookieSession({
   keys: ["superSecretKey", "secondSuperSecretKey"]
 }));
 
+//hardcoded users will not work due to password hashing
 const users = {
   "randomUserID": {
     id: "randomUserID",
@@ -33,39 +34,21 @@ const urlDatabase = {
   "9sm5xK": { longURL: "http://www.google.com", userID: "randomUserID"}
 };
 
-//returns random 7 digit string made up of numbers or letters via base 36 conversion
-const generateRandomString = function() {
-  return Math.random().toString(36).substring(7);
-};
-
-//finds urls created by user
-const findForUser = function(id) {
-  const userUrlDatabase = {};
-  for (const urls in urlDatabase) {
-    if (urlDatabase[urls].userID === id) {
-      userUrlDatabase[urls] = {longURL: urlDatabase[urls].longURL , userID: id};
-    }
-  }
-  return userUrlDatabase;
-};
-
-//home page route
+//home page endpoint
 app.get("/", (req, res) => {
   if (req.session.user_id) {
     return res.redirect("/urls");
   }
-  res.redirect("/login");
+  return res.redirect("/login");
 });
 
-app.get("/urls.json", (req, res)=>{
-  res.json(urlDatabase);
-});
-
-
-//registration page endpoint
+//registration page endpoint 
 app.get("/register", (req, res)=>{
+  if (req.session.user_id !== undefined) {
+    return res.redirect("/urls");
+  }
   const templateVars = {user: users[req.session.user_id]};
-  res.render("urls_registration", templateVars);
+  return res.render("urls_registration", templateVars);
 });
 
 // registration submit endpoint
@@ -73,38 +56,44 @@ app.post("/register", (req, res)=>{
   const randomID = generateRandomString();
   const userInfo = findByEmail(req.body.email, users);
   if (req.body.email === "" || req.body.password === "" || userInfo !== undefined) {
-    return res.sendStatus(400);
+    const templateVars = {
+      email: req.body.email,
+      password: req.body.password,
+      userInfo: userInfo,
+      user: users[req.session.user_id]
+    }
+    return res.render("urls_registration_failure", templateVars)
   }
   users[randomID] = { id: randomID, email: req.body.email, password: bcrypt.hashSync(req.body.password, 10)};
   req.session.user_id = randomID;
-  res.redirect("/urls");
+  return res.redirect("/urls");
 });
 
 //urls list endpoint
 app.get("/urls", (req, res)=>{
-  const userURL = findForUser(req.session.user_id);
+  const userURL = findForUser(req.session.user_id, urlDatabase);
   const templateVars = {urls: userURL, user: users[req.session.user_id]};
-  res.render("urls_index", templateVars);
+  return res.render("urls_index", templateVars);
 });
 
-//add urls endpoint
+//add urls endpoint 
 app.get("/urls/new", (req, res)=>{
   if (req.session.user_id === undefined) {
-    res.redirect("/login");
+    return res.redirect("/login");
   }
   const templateVars = {user: users[req.session.user_id]};
-  res.render("urls_new", templateVars);
+  return res.render("urls_new", templateVars);
 });
 
-//create new short url
+//create new short url endpoint
 app.post("/urls", (req, res)=>{
   let shortURL = generateRandomString();
   let newLongURL = req.body.longURL;
   urlDatabase[shortURL] = {longURL: newLongURL, userID: req.session.user_id};
-  res.redirect(`/urls/${shortURL}`);
+  return res.redirect(`/urls/${shortURL}`);
 });
 
-//delete existing url
+//delete existing url endpoint
 app.post("/urls/:shortURL/delete", (req, res)=>{
   const shortURL = req.params.shortURL;
   const currentID = req.session.user_id;
@@ -112,31 +101,34 @@ app.post("/urls/:shortURL/delete", (req, res)=>{
     delete urlDatabase[shortURL];
     return res.redirect("/urls");
   }
-  res.send("Unauthorized delete attempt");
+  return res.send("Unauthorized delete attempt");
 });
 
-//logout route
+//logout endpoint
 app.post("/logout", (req,res)=>{
-  req.session.user_id = null;
-  res.redirect("/urls");
+  req.session = null;
+  return res.redirect("/urls");
 });
 
-//updates existing
+//updates existing url endpoint
 app.post("/urls/:shortURL", (req, res)=>{
   const shortURL = req.params.shortURL;
   const newLong = req.body.longURL;
   const currentID = req.session.user_id;
   if (urlDatabase[shortURL].userID === currentID) {
     urlDatabase[shortURL].longURL = newLong;
-    return res.redirect(`/urls/${shortURL}`);
+    return res.redirect("/urls");
   }
   return res.send("Unauthorized update attempt");
 });
 
-//login route
+//login endpoint
 app.get("/login", (req,res)=>{
+  if (req.session.user_id !== undefined) {
+    return res.redirect("/urls");
+  }
   const templateVars = {user: users[req.session.user_id]};
-  res.render("urls_login", templateVars);
+  return res.render("urls_login", templateVars);
 });
 
 //login submit endpoint
@@ -155,17 +147,26 @@ app.post("/login", (req, res)=>{
 
 // redirect for shortURL's
 app.get("/u/:shortURL", (req, res)=>{
+  if (urlDatabase[req.params.shortURL] === undefined) {
+    return res.send("Not a valid short URL, please try again.")
+  }
   const longURL = urlDatabase[req.params.shortURL].longURL;
-  res.redirect(longURL);
+  return res.redirect(longURL);
 });
+
 //individual link page endpoint
 app.get("/urls/:shortURL", (req, res)=>{
-  const userUrlDatabase = findForUser(req.session.user_id);
+  const userUrlDatabase = findForUser(req.session.user_id, urlDatabase);
   if (urlDatabase[req.params.shortURL] === undefined) {
-    res.send("Requested URL does not exist");
+    return res.send("Requested URL does not exist");
   }
-  const templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL].longURL, user: users[req.session.user_id], urls: userUrlDatabase};
-  res.render("urls_show", templateVars);
+  const templateVars = { 
+    shortURL: req.params.shortURL,
+    longURL: urlDatabase[req.params.shortURL].longURL,
+    user: users[req.session.user_id],
+    urls: userUrlDatabase
+  };
+  return res.render("urls_show", templateVars);
 });
 
 

@@ -8,4 +8,20 @@ const findByEmail = function(userEmail, userDatabase) {
   return undefined;
 };
 
-module.exports = { findByEmail };
+//returns urls created by user
+const findForUser = function(id, userDatabase) {
+  const userUrlDatabase = {};
+  for (const urls in userDatabase) {
+    if (userDatabase[urls].userID === id) {
+      userUrlDatabase[urls] = {longURL: userDatabase[urls].longURL , userID: id};
+    }
+  }
+  return userUrlDatabase;
+};
+
+//returns random 7 digit string made up of numbers or letters via base 36 conversion
+const generateRandomString = function() {
+  return Math.random().toString(36).substring(7);
+};
+
+module.exports = { findByEmail, findForUser, generateRandomString };
