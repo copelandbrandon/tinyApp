@@ -139,9 +139,13 @@ app.post("/login", (req, res)=>{
   const password = req.body.password;
   const userInfo = findByEmail(req.body.email, users);
   if (req.body.email === "" || userInfo === undefined) {
-    return res.status(403).send("Error: Status Code 403, please register for an account first");
+    const notRegistered = "Error: Status Code 403, please register for an account first";
+    let templateVars = { error: notRegistered, user: users[req.session.userId]};
+    return res.render("urls_login_failure", templateVars);
   } else if (userInfo.email === userEmail && bcrypt.compareSync(password, userInfo.password) !== true) {
-    return res.status(403).send("Error: Status Code 403, invalid password.");
+    const invalidPassword = "Error: Status Code 403, invalid password.";
+    templateVars = { error: invalidPassword, user: users[req.session.userId]};
+    return res.render("urls_login_failure", templateVars);
   }
   req.session.userId = userInfo.id;
   return res.redirect("/urls");
